@@ -42,5 +42,4 @@ const ResetPassword = () => {
     </Container>
   );
 };
-
 export default ResetPassword;

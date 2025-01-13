@@ -1,32 +1,19 @@
-const API_BASE_URL = "https://pm-api.deval.us/api";
+import axios from "axios";
 
-export const apiCall = async (
-  endpoint: string,
-  method: string,
-  body?: object,
-  authRequired = true
-) => {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_BASE_URL || "/api", // Use environment variable or default base URL
+});
 
-  if (authRequired) {
-    const token = localStorage.getItem("token");
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-  }
+// Login API call
+export const login = (data: { email: string; password: string }) =>
+  api.post("/login", data);
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+// Register API call
+export const register = (data: { firstName: string; lastName: string; email: string; password: string }) =>
+  api.post("/register", data);
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Something went wrong");
-  }
+// Reset Password API call
+export const resetPassword = (data: { token: string; newPassword: string }) =>
+  api.post("/reset-password", data);
 
-  return await response.json();
-};
+export default api;

@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import API_ENDPOINTS from "../../config/apiConfig";
 
 const Register = () => {
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const navigate = useNavigate();
@@ -12,7 +14,12 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post(API_ENDPOINTS.REGISTER, { email, password });
+      const response = await axios.post(API_ENDPOINTS.REGISTER, {
+        firstName,
+        lastName,
+        email,
+        password,
+      });
       alert("Registration successful!");
       navigate("/login");
     } catch (error: any) {
@@ -27,6 +34,26 @@ const Register = () => {
       <div style={{ maxWidth: "400px", width: "100%" }}>
         <h2 className="text-center mb-4">Register</h2>
         <Form onSubmit={handleRegister}>
+          <Form.Group className="mb-3" controlId="firstName">
+            <Form.Label>First Name</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Enter first name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+            />
+          </Form.Group>
+          <Form.Group className="mb-3" controlId="lastName">
+            <Form.Label>Last Name</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Enter last name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+            />
+          </Form.Group>
           <Form.Group className="mb-3" controlId="email">
             <Form.Label>Email</Form.Label>
             <Form.Control
