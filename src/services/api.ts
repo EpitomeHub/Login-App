@@ -1,30 +1,32 @@
-import axios from 'axios';
+const API_BASE_URL = "https://pm-api.deval.us/api";
 
-const API = axios.create({
-  baseURL: 'https://api.your-backend.com', // Replace with your backend URL
-});
+export const apiCall = async (
+  endpoint: string,
+  method: string,
+  body?: object,
+  authRequired = true
+) => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
 
-// Add Token to Requests
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (authRequired) {
+    const token = localStorage.getItem("token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
   }
-  return config;
-});
 
-// Authentication APIs
-export const login = (data: { email: string; password: string }) => API.post('/auth/login', data);
-export const register = (data: { name: string; email: string; password: string }) => API.post('/auth/register', data);
-export const resetPassword = (email: string) => API.post('/auth/reset-password', { email });
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
 
-// User Profile APIs
-export const getProfile = () => API.get('/profile');
-export const updateProfile = (data: { name: string; email: string }) => API.put('/profile', data);
-export const changePassword = (data: { currentPassword: string; newPassword: string }) => API.put('/profile/change-password', data);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Something went wrong");
+  }
 
-// Admin APIs
-export const getUsers = () => API.get('/admin/users');
-export const manageUser = (id: number, action: 'enable' | 'disable' | 'delete') => API.post(`/admin/users/${id}/${action}`);
-export const getApplications = () => API.get('/admin/applications');
-export const manageApplication = (id: number, action: 'approve' | 'deny') => API.post(`/admin/applications/${id}/${action}`);
+  return await response.json();
+};

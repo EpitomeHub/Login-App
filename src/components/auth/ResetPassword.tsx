@@ -1,44 +1,44 @@
-import React, { useState } from 'react';
-import { Form, Button, Container, Row, Col } from 'react-bootstrap';
-import { resetPassword } from '../../services/api';
+import React, { useState } from "react";
+import { Form, Button, Container } from "react-bootstrap";
+import axios from "axios";
+import API_ENDPOINTS from "../../config/apiConfig";
+
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState<string>("");
 
-  const handleReset = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await resetPassword(email);
-      alert('Password reset link sent to your email.');
-    } catch (error) {
-      alert('Error sending reset link. Try Again.');
+      const response = await axios.post(API_ENDPOINTS.FORGOT_PASSWORD, { email });
+      alert(response.data.message || "Password reset link sent to your email");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to connect to the server.";
+      alert(errorMessage);
     }
   };
 
   return (
-    <Container fluid className="vh-100 d-flex justify-content-center align-items-center bg-light">
-      <Row className="w-100">
-        <Col xs={12} md={6} lg={4} className="mx-auto">
-          <h2 className="mb-4 text-start">Forgot Password</h2>
-          <Form onSubmit={handleReset}>
-            <Form.Group className="mb-3" controlId="email">
-              <Form.Label>Email address</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={{ maxWidth: '300px' }}
-              />
-            </Form.Group>
-            <div className="d-flex justify-content-between align-items-center" style={{ maxWidth: '300px' }}>
-              <Button variant="primary" type="submit">Send Link</Button>
-              <a href="/login" className="text-decoration-none">Back to Login</a>
-            </div>
-          </Form>
-        </Col>
-      </Row>
+    <Container className="d-flex vh-100 justify-content-center align-items-center">
+      <div style={{ maxWidth: "400px", width: "100%" }}>
+        <h2 className="text-center mb-4">Reset Password</h2>
+        <Form onSubmit={handleResetPassword}>
+          <Form.Group className="mb-3" controlId="email">
+            <Form.Label>Email</Form.Label>
+            <Form.Control
+              type="email"
+              placeholder="Enter email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Form.Group>
+          <Button type="submit" className="w-100">
+            Reset Password
+          </Button>
+        </Form>
+      </div>
     </Container>
   );
 };
