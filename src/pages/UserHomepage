@@ -1,0 +1,219 @@
+import React, { useState, useEffect } from "react";
+import { Button, Modal, Form } from "react-bootstrap";
+import axios from "axios";
+
+const UserHomePage = () => {
+  // State for user details
+  const [user, setUser] = useState<{ firstName: string; lastName: string; email: string } | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true); // State for loading
+  const [error, setError] = useState<string | null>(null); // State for error messages
+
+  // State for modals
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+  // State for forms
+  const [editForm, setEditForm] = useState({ firstName: "", lastName: "", email: "" });
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "" });
+
+  // Fetch user details on component mount
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const response = await axios.get("/api/user", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setUser(response.data);
+        setEditForm({
+          firstName: response.data.firstName,
+          lastName: response.data.lastName,
+          email: response.data.email,
+        });
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to fetch user details. Please try again.");
+        setLoading(false);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
+
+  // Handle update details
+  const handleUpdateDetails = async () => {
+    try {
+      await axios.put(
+        "/api/user",
+        { ...editForm },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setUser({ ...user, ...editForm });
+      alert("User details updated successfully!");
+      setShowEditModal(false);
+    } catch (err) {
+      alert("Failed to update user details.");
+      console.error(err);
+    }
+  };
+
+  // Handle update password
+  const handleUpdatePassword = async () => {
+    try {
+      await axios.put(
+        "/api/user/update-password",
+        { ...passwordForm },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      alert("Password updated successfully!");
+      setShowPasswordModal(false);
+    } catch (err) {
+      alert("Failed to update password.");
+      console.error(err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center mt-5">
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center mt-5">
+        <p className="text-danger">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container my-5">
+      <h2 className="text-center mb-4">User Home Page</h2>
+
+      {user && (
+        <div className="user-details p-4 border rounded bg-light">
+          <h4>User Details</h4>
+          <p>
+            <strong>First Name:</strong> {user.firstName}
+          </p>
+          <p>
+            <strong>Last Name:</strong> {user.lastName}
+          </p>
+          <p>
+            <strong>Email:</strong> {user.email}
+          </p>
+          <Button variant="primary" className="me-2" onClick={() => setShowEditModal(true)}>
+            Edit Details
+          </Button>
+          <Button variant="secondary" onClick={() => setShowPasswordModal(true)}>
+            Update Password
+          </Button>
+        </div>
+      )}
+
+      {/* Edit Details Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit User Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>First Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={editForm.firstName}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, firstName: e.target.value })
+                }
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Last Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={editForm.lastName}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, lastName: e.target.value })
+                }
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleUpdateDetails}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Update Password Modal */}
+      <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Update Password</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Current Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) =>
+                  setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
+                }
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>New Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) =>
+                  setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                }
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleUpdatePassword}>
+            Update Password
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  );
+};
+
+export default UserHomePage;
