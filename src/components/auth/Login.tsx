@@ -4,7 +4,6 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import API_ENDPOINTS from "../../config/apiConfig";
 
-
 const Login = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -13,16 +12,23 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Make login request
       const response = await axios.post(API_ENDPOINTS.LOGIN, { email, password });
       const data = response.data;
 
+      // Save token to localStorage
       localStorage.setItem("token", data.token);
+
+      // Navigate to user home page
       alert("Successfully logged in");
       navigate("/dashboard");
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message || "Failed to connect to the server.";
+        error.response?.data?.message || "Invalid credentials or server error.";
       alert(errorMessage);
+
+      // Redirect to failure login page
+      navigate("/failure-login");
     }
   };
 

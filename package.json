@@ -1,9 +1,7 @@
 {
-  "name": "my-app",
-  "version": "0.1.0",
-  "private": true,
   "name": "react-ts-auth",
   "version": "1.0.0",
+  "private": true,
   "proxy": "https://pm-api.deval.us",
   "dependencies": {
     "@svgr/webpack": "^8.1.0",
@@ -13,6 +11,7 @@
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.123",
     "@types/react": "^18.3.18",
+    "@types/react-bootstrap": "^0.32.37",
     "@types/react-dom": "^18.3.5",
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
