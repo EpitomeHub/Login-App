@@ -1,166 +1,127 @@
 import React, { useState, useEffect } from "react";
-import { Table, Form, Button, Modal, Container } from "react-bootstrap";
-import axios from "axios";
-import  API_ENDPOINTS  from "../config/apiConfig";
+import { Container } from "react-bootstrap";
+import axios, { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
-interface User {
-  userId: string;
-  username: string;
-  userType: string;
-  userStatus: string;
-  userCreated: string;
-  userLastLogin: string;
+interface UserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdOn: string;
+  updatedOn: string;
 }
 
-const Dashboard = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+interface ApiErrorResponse {
+  message: string;
+}
 
-  // Fetch user details on component mount
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      const email = "test@gmail.com"; // Replace with the logged-in user's email
-      try {
-        const response = await axios.get(API_ENDPOINTS.FETCH_USER(email), {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Add token
-          },
-        });
-        const userData = response.data;
-        const formattedUser = {
-          userId: userData.id,
-          username: userData.name,
-          userType: userData.type,
-          userStatus: userData.status,
-          userCreated: userData.createdAt,
-          userLastLogin: userData.lastLogin,
-        };
-        setUsers([formattedUser]); // Wrap in array for table display
-      } catch (error: any) {
-        console.error("Error fetching user details:", error);
-        alert("Failed to fetch user details.");
-      }
-    };
+const Dashboard: React.FC = () => {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-    fetchUserDetails();
-  }, []);
-
-  // Handle Edit Button
-  const handleEdit = (user: User) => {
-    setEditingUser(user);
-    setShowEditModal(true);
-  };
-
-  // Handle Save for Edit Modal
-  const handleSaveEdit = async () => {
-    if (!editingUser) return;
-
+  const fetchUserData = async (email: string, token: string) => {
+    setLoading(true);
     try {
-      const { userId, username } = editingUser;
-      await axios.put(
-        API_ENDPOINTS.EDIT_USER(userId),
-        { username },
+      const response = await axios.get(
+        `https://pm-api.deval.us/api/user/${email}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.userId === userId ? { ...user, username } : user
-        )
+      console.log({token});
+      setUserData(response.data.data);
+    } catch (err: unknown) {
+      const error = err as AxiosError<ApiErrorResponse>;
+      setError(
+        error.response?.data?.message || "Failed to fetch user data"
       );
-      setShowEditModal(false);
-      alert("User details updated successfully.");
-    } catch (error: any) {
-      console.error("Error updating user details:", error);
-      alert("Failed to update user details.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const email = localStorage.getItem("email");
+
+    if (!token || !email) {
+      alert("Session expired. Redirecting to login.");
+      navigate("/");
+      return;
+    }
+
+    fetchUserData(email, token);
+  }, [navigate]);
+
+  if (error) {
+    return (
+      <Container className="my-5">
+        <h2 className="text-center text-danger">{error}</h2>
+      </Container>
+    );
+  }
+
+  if (loading || !userData) {
+    return (
+      <Container className="my-5">
+        <h2 className="text-center">Loading user details...</h2>
+      </Container>
+    );
+  }
 
   return (
     <Container className="my-5">
       <h2 className="text-center mb-4">User Dashboard</h2>
-
-      {/* User Table */}
-      <Table bordered hover>
-        <thead>
-          <tr>
-            <th>UserID</th>
-            <th>Username</th>
-            <th>User Type</th>
-            <th>User Status</th>
-            <th>User Created</th>
-            <th>User Last Login</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.userId}>
-              <td>{user.userId}</td>
-              <td>{user.username}</td>
-              <td>{user.userType}</td>
-              <td>
-                <span
-                  className={`badge ${
-                    user.userStatus === "Active" ? "bg-success" : "bg-secondary"
-                  }`}
-                >
-                  {user.userStatus}
-                </span>
-              </td>
-              <td>{user.userCreated}</td>
-              <td>{user.userLastLogin}</td>
-              <td>
-                <Button
-                  variant="warning"
-                  size="sm"
-                  onClick={() => handleEdit(user)}
-                >
-                  Edit
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-
-      {/* Edit Modal */}
-      {editingUser && (
-        <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Edit User</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form>
-              <Form.Group className="mb-3">
-                <Form.Label>Username</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={editingUser.username}
-                  onChange={(e) =>
-                    setEditingUser({
-                      ...editingUser,
-                      username: e.target.value,
-                    })
-                  }
-                />
-              </Form.Group>
-            </Form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-              Close
-            </Button>
-            <Button variant="primary" onClick={handleSaveEdit}>
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      )}
+      <form>
+        <div>
+          <label>
+            <strong>First Name:</strong>
+          </label>
+          <span> {userData.firstName}</span>
+        </div>
+        <div>
+          <label>
+            <strong>Last Name:</strong>
+          </label>
+          <span> {userData.lastName}</span>
+        </div>
+        <div>
+          <label>
+            <strong>Email:</strong>
+          </label>
+          <span> {userData.email}</span>
+        </div>
+        <div>
+          <label>
+            <strong>Role:</strong>
+          </label>
+          <span> {userData.role}</span>
+        </div>
+        <div>
+          <label>
+            <strong>Active:</strong>
+          </label>
+          <span> {userData.isActive ? "Yes" : "No"}</span>
+        </div>
+        <div>
+          <label>
+            <strong>Created On:</strong>
+          </label>
+          <span> {new Date(userData.createdOn).toLocaleString()}</span>
+        </div>
+        <div>
+          <label>
+            <strong>Updated On:</strong>
+          </label>
+          <span> {new Date(userData.updatedOn).toLocaleString()}</span>
+        </div>
+      </form>
     </Container>
   );
 };
